@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SubStack — Manage Every Subscription in One Place</title>
+  <meta name="description" content="See every subscription you're paying for. Get notified before renewals. Cancel what you don't need. Free forever for up to 5 subscriptions." />
+  <style>
+    :root {
+      --bg: #05060a;
+      --panel: #0f1117;
+      --panel-alt: #12141d;
+      --border: rgba(255,255,255,0.07);
+      --accent: #4f9bff;
+      --accent-soft: rgba(79,155,255,0.10);
+      --text: #f0f2f8;
+      --muted: rgba(240,242,248,0.55);
+      --positive: #5de4a1;
+      --warning: #f8c66c;
+      --danger: #ff7b7b;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; }
+
+    /* NAV */
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
+    .nav-logo { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+
+    /* HERO */
+    .hero { max-width: 860px; margin: 0 auto; padding: 100px 24px 80px; text-align: center; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-soft); border: 1px solid rgba(79,155,255,0.2); border-radius: 100px; padding: 6px 14px; font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 28px; letter-spacing: 0.3px; }
+    .hero h1 { font-size: clamp(36px, 6vw, 64px); font-weight: 800; line-height: 1.08; letter-spacing: -1.5px; margin-bottom: 24px; }
+    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero p { font-size: 18px; color: var(--muted); max-width: 540px; margin: 0 auto 40px; line-height: 1.7; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { background: var(--accent); color: #fff; border: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; transition: border-color 0.2s; }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.2); }
+    .hero-note { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+    /* DASHBOARD PREVIEW */
+    .preview { max-width: 900px; margin: 0 auto 100px; padding: 0 24px; }
+    .dashboard-mock { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.5); }
+    .mock-header { background: var(--panel-alt); padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mock-dot.red { background: #ff5f57; }
+    .mock-dot.yellow { background: #febc2e; }
+    .mock-dot.green { background: #28c840; }
+    .mock-title { font-size: 13px; color: var(--muted); margin-left: 8px; }
+    .mock-body { padding: 24px; }
+    .mock-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .mock-stat { background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .mock-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .mock-stat-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .mock-stat-value.accent { color: var(--accent); }
+    .mock-stat-value.warning { color: var(--warning); }
+    .mock-sub-list { display: flex; flex-direction: column; gap: 8px; }
+    .mock-sub { background: var(--panel-alt); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .mock-sub-left { display: flex; align-items: center; gap: 12px; }
+    .mock-sub-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .mock-sub-name { font-size: 14px; font-weight: 600; }
+    .mock-sub-date { font-size: 12px; color: var(--muted); }
+    .mock-sub-amount { font-size: 15px; font-weight: 700; }
+    .mock-sub-pill { font-size: 11px; padding: 3px 8px; border-radius: 100px; font-weight: 600; }
+    .pill-active { background: rgba(93,228,161,0.12); color: var(--positive); }
+    .pill-renew { background: rgba(248,198,108,0.12); color: var(--warning); }
+
+    /* STATS BAR */
+    .stats-bar { background: var(--panel-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 40px 48px; display: flex; justify-content: center; gap: 80px; flex-wrap: wrap; }
+    .stat-item { text-align: center; }
+    .stat-number { font-size: 36px; font-weight: 800; letter-spacing: -1px; color: var(--accent); }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* HOW IT WORKS */
+    .section { max-width: 960px; margin: 0 auto; padding: 80px 24px; }
+    .section-label { font-size: 12px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .section-title { font-size: clamp(28px, 4vw, 42px); font-weight: 800; letter-spacing: -0.8px; margin-bottom: 16px; }
+    .section-sub { font-size: 17px; color: var(--muted); max-width: 520px; line-height: 1.7; margin-bottom: 56px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .step { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+    .step-num { font-size: 12px; color: var(--accent); font-weight: 700; margin-bottom: 12px; }
+    .step-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .step-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* FEATURES */
+    .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 0; }
+    .feature { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+    .feature-icon { font-size: 24px; margin-bottom: 14px; }
+    .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .feature-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* PRICING */
+    .pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .plan { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; position: relative; }
+    .plan.featured { border-color: var(--accent); background: linear-gradient(135deg, var(--panel), rgba(79,155,255,0.05)); }
+    .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 100px; white-space: nowrap; }
+    .plan-name { font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .plan-price { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+    .plan-price span { font-size: 15px; font-weight: 400; color: var(--muted); }
+    .plan-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .plan-features li { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .plan-features li::before { content: '✓'; color: var(--positive); font-weight: 700; font-size: 13px; }
+    .plan-cta { width: 100%; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; }
+    .plan-cta.outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .plan-cta.filled { background: var(--accent); color: #fff; }
+
+    /* CTA SECTION */
+    .cta-section { background: var(--panel-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 80px 24px; text-align: center; }
+    .cta-section h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; letter-spacing: -0.8px; margin-bottom: 16px; }
+    .cta-section p { font-size: 17px; color: var(--muted); margin-bottom: 36px; }
+
+    /* FOOTER */
+    footer { padding: 40px 48px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .footer-logo { font-size: 15px; font-weight: 700; }
+    .footer-logo span { color: var(--accent); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
+    .footer-copy { font-size: 13px; color: var(--muted); }
+
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .stats-bar { gap: 40px; padding: 32px 24px; }
+      .steps { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+      .pricing { grid-template-columns: 1fr; }
+      footer { padding: 32px 20px; flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Sub<span>Stack</span></div>
+  <div class="nav-links">
+    <a href="#how-it-works">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <a href="#pricing" class="nav-cta">Get started free</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🔒 Free forever · No credit card required</div>
+  <h1>Every subscription.<br /><em>One dashboard.</em></h1>
+  <p>Stop losing money on forgotten subscriptions. See everything you're paying for, get renewal alerts, and cancel what you don't need — in 60 seconds.</p>
+  <div class="hero-actions">
+    <a href="#pricing" class="btn-primary">Get started free →</a>
+    <a href="#how-it-works" class="btn-secondary">See how it works</a>
+  </div>
+  <p class="hero-note">Free for up to 5 subscriptions · No credit card needed</p>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<div class="preview">
+  <div class="dashboard-mock">
+    <div class="mock-header">
+      <div class="mock-dot red"></div>
+      <div class="mock-dot yellow"></div>
+      <div class="mock-dot green"></div>
+      <span class="mock-title">SubStack — Dashboard</span>
+    </div>
+    <div class="mock-body">
+      <div class="mock-stats">
+        <div class="mock-stat">
+          <div class="mock-stat-label">Monthly Spend</div>
+          <div class="mock-stat-value accent">$284/mo</div>
+        </div>
+        <div class="mock-stat">
+          <div class="mock-stat-label">Active Subscriptions</div>
+          <div class="mock-stat-value">14</div>
+        </div>
+        <div class="mock-stat">
+          <div class="mock-stat-label">Renewing Soon</div>
+          <div class="mock-stat-value warning">3 this week</div>
+        </div>
+      </div>
+      <div class="mock-sub-list">
+        <div class="mock-sub">
+          <div class="mock-sub-left">
+            <div class="mock-sub-icon" style="background:rgba(229,46,46,0.12)">🎬</div>
+            <div>
+              <div class="mock-sub-name">Netflix</div>
+              <div class="mock-sub-date">Renews Apr 3</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="mock-sub-amount">$22.99</div>
+            <div class="mock-sub-pill pill-active">Active</div>
+          </div>
+        </div>
+        <div class="mock-sub">
+          <div class="mock-sub-left">
+            <div class="mock-sub-icon" style="background:rgba(30,215,96,0.12)">🎵</div>
+            <div>
+              <div class="mock-sub-name">Spotify</div>
+              <div class="mock-sub-date">Renews Mar 28</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="mock-sub-amount">$10.99</div>
+            <div class="mock-sub-pill pill-renew">Renews soon</div>
+          </div>
+        </div>
+        <div class="mock-sub">
+          <div class="mock-sub-left">
+            <div class="mock-sub-icon" style="background:rgba(79,155,255,0.12)">💼</div>
+            <div>
+              <div class="mock-sub-name">Adobe Creative Cloud</div>
+              <div class="mock-sub-date">Renews Apr 12</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="mock-sub-amount">$54.99</div>
+            <div class="mock-sub-pill pill-active">Active</div>
+          </div>
+        </div>
+        <div class="mock-sub">
+          <div class="mock-sub-left">
+            <div class="mock-sub-icon" style="background:rgba(93,228,161,0.12)">🤖</div>
+            <div>
+              <div class="mock-sub-name">ChatGPT Plus</div>
+              <div class="mock-sub-date">Renews Mar 30</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="mock-sub-amount">$20.00</div>
+            <div class="mock-sub-pill pill-renew">Renews soon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-number">$348</div>
+    <div class="stat-label">avg. wasted per year on forgotten subs</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">14</div>
+    <div class="stat-label">avg. active subscriptions per person</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">60s</div>
+    <div class="stat-label">to connect and see everything</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how-it-works">
+  <div class="section-label">How it works</div>
+  <div class="section-title">Set up in 60 seconds.</div>
+  <div class="section-sub">Connect your email, add subscriptions manually, or both. SubStack scans your billing emails and builds your dashboard automatically.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">STEP 01</div>
+      <div class="step-title">Connect your email</div>
+      <div class="step-desc">SubStack scans your inbox for billing confirmation emails and automatically detects your subscriptions. Takes 30 seconds.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">STEP 02</div>
+      <div class="step-title">Review your dashboard</div>
+      <div class="step-desc">See every subscription in one clean view — name, amount, next billing date, and category. Instantly know what you're paying for.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">STEP 03</div>
+      <div class="step-title">Set alerts & take action</div>
+      <div class="step-desc">Get notified before renewals. Flag subscriptions you want to review. Cancel what you don't need before you get charged.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features" style="padding-top:0">
+  <div class="section-label">Features</div>
+  <div class="section-title">Everything you need.<br />Nothing you don't.</div>
+  <div class="section-sub">Built for people who want to be in control of their spending — without the complexity.</div>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">📧</div>
+      <div class="feature-title">Email scanning</div>
+      <div class="feature-desc">Connect Gmail or Outlook. SubStack reads billing confirmations and auto-populates your subscriptions. No manual entry required.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔔</div>
+      <div class="feature-title">Renewal alerts</div>
+      <div class="feature-desc">Get notified 7 days before any subscription renews. Never get surprised by an unexpected charge again.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Spending analytics</div>
+      <div class="feature-desc">See your total monthly and annual spend broken down by category. Spot patterns. Make smarter decisions about what to keep.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">✏️</div>
+      <div class="feature-title">Manual entry</div>
+      <div class="feature-desc">Add any subscription manually in seconds. Track services that don't send email receipts — gym memberships, parking, anything.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🏢</div>
+      <div class="feature-title">Business tier</div>
+      <div class="feature-desc">Multi-user access for teams. Track all your SaaS and vendor subscriptions in one place. Perfect for small businesses managing 10–50 tools.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-title">Privacy first</div>
+      <div class="feature-desc">Read-only email access. We never store email content — only the subscription data we extract from it. Your inbox stays yours.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <div class="section-label">Pricing</div>
+  <div class="section-title">Start free.<br />Upgrade when ready.</div>
+  <div class="section-sub">No credit card required. Cancel anytime.</div>
+  <div class="pricing">
+    <div class="plan">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">$0 <span>/ forever</span></div>
+      <div class="plan-desc">For individuals just getting started.</div>
+      <ul class="plan-features">
+        <li>Up to 5 subscriptions</li>
+        <li>Manual entry</li>
+        <li>Renewal alerts</li>
+        <li>Spending overview</li>
+      </ul>
+      <button class="plan-cta outline">Get started free</button>
+    </div>
+    <div class="plan featured">
+      <div class="plan-badge">Most popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">$4.99 <span>/ month</span></div>
+      <div class="plan-desc">For individuals who want full visibility and control.</div>
+      <ul class="plan-features">
+        <li>Unlimited subscriptions</li>
+        <li>Email scanning (auto-detect)</li>
+        <li>Advanced analytics</li>
+        <li>Renewal alerts + reminders</li>
+        <li>Cancel suggestions</li>
+        <li>CSV export</li>
+      </ul>
+      <button class="plan-cta filled">Start Pro — $4.99/mo</button>
+    </div>
+    <div class="plan">
+      <div class="plan-name">Business</div>
+      <div class="plan-price">$19.99 <span>/ month</span></div>
+      <div class="plan-desc">For teams managing vendor and SaaS subscriptions.</div>
+      <ul class="plan-features">
+        <li>Everything in Pro</li>
+        <li>Up to 5 team members</li>
+        <li>Shared subscription library</li>
+        <li>Approval workflows</li>
+        <li>Admin controls</li>
+        <li>Priority support</li>
+      </ul>
+      <button class="plan-cta outline">Start Business</button>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>Stop paying for things<br />you forgot about.</h2>
+  <p>It takes 60 seconds to see everything you're paying for. Free forever.</p>
+  <a href="#pricing" class="btn-primary">Get started free →</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Sub<span>Stack</span></div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+  <div class="footer-copy">© 2026 SubStack. All rights reserved.</div>
+</footer>
+
+</body>
+</html>
